@@ -1,0 +1,1810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Kayas — Sign Documents with Confidence</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+:root{
+  --ink:#0d0d12;
+  --ink2:#1c1c28;
+  --surface:#f7f5f0;
+  --surface2:#eeeae3;
+  --gold:#c89b3c;
+  --gold2:#e8b84b;
+  --accent:#2d6a4f;
+  --accent2:#52b788;
+  --text:#1a1a24;
+  --text2:#5a5a72;
+  --text3:#9898b0;
+  --border:#e0dbd0;
+  --white:#ffffff;
+  --shadow:0 2px 20px rgba(0,0,0,0.08);
+  --shadow2:0 8px 48px rgba(0,0,0,0.14);
+  --r:10px;
+  --r2:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text);min-height:100vh}
+h1,h2,h3,.serif{font-family:'Cormorant Garamond',serif}
+
+/* ── VIEWS ── */
+.view{display:none}
+.view.active{display:block}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 48px;height:64px;display:flex;align-items:center;justify-content:space-between;background:rgba(247,245,240,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);transition:box-shadow .3s}
+nav.scrolled{box-shadow:var(--shadow)}
+.nav-logo{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--ink);cursor:pointer;letter-spacing:-0.5px}
+.nav-logo span{color:var(--gold)}
+.nav-links{display:flex;align-items:center;gap:32px}
+.nav-links a{font-size:14px;color:var(--text2);cursor:pointer;transition:color .2s;font-weight:500;text-decoration:none}
+.nav-links a:hover{color:var(--text)}
+.nav-cta{display:flex;gap:12px}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 22px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .2s;text-decoration:none;white-space:nowrap}
+.btn-primary{background:var(--ink);color:var(--white)}
+.btn-primary:hover{background:var(--ink2);transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,0.2)}
+.btn-outline{background:transparent;color:var(--text);border:1.5px solid var(--border)}
+.btn-outline:hover{border-color:var(--text);background:rgba(0,0,0,0.03)}
+.btn-gold{background:var(--gold);color:var(--white)}
+.btn-gold:hover{background:var(--gold2);transform:translateY(-1px);box-shadow:0 4px 20px rgba(200,155,60,0.35)}
+.btn-green{background:var(--accent);color:var(--white)}
+.btn-green:hover{background:var(--accent2)}
+.btn-danger{background:#dc3545;color:var(--white)}
+.btn-danger:hover{background:#c82333}
+.btn-sm{padding:7px 16px;font-size:13px}
+.btn-lg{padding:14px 32px;font-size:16px;border-radius:12px}
+.btn-icon{padding:8px;border-radius:8px}
+
+/* ── LANDING ── */
+#view-landing{background:var(--surface)}
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:120px 48px 80px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 800px 500px at 50% 30%,rgba(200,155,60,0.07) 0%,transparent 70%);pointer-events:none}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(200,155,60,0.1);border:1px solid rgba(200,155,60,0.25);border-radius:100px;padding:6px 16px;font-size:12px;font-weight:600;color:var(--gold);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:32px;animation:fadeUp 0.6s ease both}
+.hero h1{font-size:clamp(52px,8vw,92px);line-height:1.0;color:var(--ink);margin-bottom:24px;animation:fadeUp 0.7s ease 0.1s both;letter-spacing:-2px}
+.hero h1 em{color:var(--gold);font-style:italic}
+.hero p{font-size:18px;color:var(--text2);max-width:560px;line-height:1.7;margin-bottom:48px;animation:fadeUp 0.7s ease 0.2s both;font-weight:300}
+.hero-actions{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;animation:fadeUp 0.7s ease 0.3s both}
+.hero-scroll{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--text3);font-size:12px;animation:fadeUp 0.7s ease 0.5s both}
+.hero-scroll-dot{width:1px;height:40px;background:linear-gradient(to bottom,var(--border),transparent)}
+
+/* floating doc preview */
+.hero-visual{margin-top:64px;position:relative;width:100%;max-width:800px;animation:fadeUp 0.8s ease 0.35s both}
+.doc-preview{background:var(--white);border-radius:16px;box-shadow:0 24px 80px rgba(0,0,0,0.12);overflow:hidden;border:1px solid var(--border)}
+.doc-preview-header{background:var(--ink);padding:14px 20px;display:flex;align-items:center;gap:8px}
+.doc-preview-dot{width:10px;height:10px;border-radius:50%}
+.doc-preview-body{padding:32px;display:grid;grid-template-columns:1fr 280px;gap:24px;align-items:start}
+.doc-lines{display:flex;flex-direction:column;gap:10px;flex:1}
+.doc-line{height:10px;border-radius:4px;background:var(--surface2)}
+.doc-line.wide{width:100%}
+.doc-line.med{width:70%}
+.doc-line.short{width:40%}
+.doc-line.gold{background:rgba(200,155,60,0.25)}
+.doc-sidebar{background:var(--surface);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.sig-field{background:var(--white);border:2px dashed rgba(200,155,60,0.4);border-radius:8px;padding:14px;text-align:center;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:18px;color:var(--gold)}
+.status-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:100px;font-size:11px;font-weight:600}
+.pill-pending{background:rgba(200,155,60,0.12);color:#8a6a00}
+.pill-signed{background:rgba(45,106,79,0.12);color:var(--accent)}
+.pill-waiting{background:rgba(100,100,180,0.12);color:#3333a0}
+
+/* features */
+.features{padding:100px 48px;max-width:1200px;margin:0 auto}
+.section-label{font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
+.section-title{font-family:'Cormorant Garamond',serif;font-size:clamp(36px,5vw,54px);color:var(--ink);margin-bottom:16px;letter-spacing:-1px;line-height:1.1}
+.section-sub{font-size:16px;color:var(--text2);max-width:500px;line-height:1.7;font-weight:300}
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;margin-top:64px}
+.feature-card{background:var(--white);border-radius:var(--r2);padding:36px;border:1px solid var(--border);transition:all .3s;position:relative;overflow:hidden}
+.feature-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--gold);transform:scaleX(0);transform-origin:left;transition:transform .3s}
+.feature-card:hover{transform:translateY(-4px);box-shadow:var(--shadow2)}
+.feature-card:hover::before{transform:scaleX(1)}
+.feature-icon{width:48px;height:48px;background:rgba(200,155,60,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;font-size:22px}
+.feature-card h3{font-size:18px;font-weight:600;color:var(--text);margin-bottom:10px}
+.feature-card p{font-size:14px;color:var(--text2);line-height:1.7;font-weight:300}
+
+/* steps */
+.steps-section{background:var(--ink);padding:100px 48px;color:var(--white)}
+.steps-inner{max-width:1000px;margin:0 auto}
+.steps-section .section-label{color:var(--gold2)}
+.steps-section .section-title{color:var(--white)}
+.steps-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:32px;margin-top:64px}
+.step{position:relative;padding-top:24px}
+.step::before{content:'';position:absolute;top:20px;left:32px;right:-32px;height:1px;background:rgba(255,255,255,0.1)}
+.step:last-child::before{display:none}
+.step-num{width:40px;height:40px;border-radius:50%;background:var(--gold);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;margin-bottom:20px;position:relative;z-index:1}
+.step h3{font-size:16px;font-weight:600;color:var(--white);margin-bottom:10px}
+.step p{font-size:13px;color:rgba(255,255,255,0.6);line-height:1.7;font-weight:300}
+
+/* footer */
+.landing-footer{padding:60px 48px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:24px}
+.footer-logo{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--ink)}
+.footer-logo span{color:var(--gold)}
+.footer-copy{font-size:13px;color:var(--text3);font-weight:300}
+.footer-links{display:flex;gap:24px}
+.footer-links a{font-size:13px;color:var(--text2);cursor:pointer;text-decoration:none}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(13,13,18,0.55);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--white);border-radius:20px;padding:48px;width:100%;max-width:440px;box-shadow:0 32px 80px rgba(0,0,0,0.2);position:relative;animation:modalIn 0.3s ease}
+.modal-close{position:absolute;top:20px;right:20px;width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--text3);transition:all .2s}
+.modal-close:hover{background:var(--surface);color:var(--text)}
+.modal-logo{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;text-align:center;margin-bottom:8px;color:var(--ink)}
+.modal-logo span{color:var(--gold)}
+.modal-sub{text-align:center;font-size:14px;color:var(--text2);margin-bottom:32px;font-weight:300}
+.modal-tabs{display:flex;gap:0;border-bottom:1.5px solid var(--border);margin-bottom:28px}
+.modal-tab{flex:1;text-align:center;padding:10px 0;font-size:14px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1.5px;transition:all .2s}
+.modal-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+
+/* ── FORM ── */
+.form-group{margin-bottom:18px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;letter-spacing:0.04em;text-transform:uppercase}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:14px;background:var(--surface);color:var(--text);transition:border-color .2s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--gold);background:var(--white)}
+.form-group textarea{resize:vertical;min-height:80px}
+.form-error{font-size:12px;color:#dc3545;margin-top:4px;display:none}
+.form-error.show{display:block}
+
+/* ── APP LAYOUT ── */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+.sidebar {
+  width: 240px;
+  position: fixed;
+  height: 100vh;
+  background: var(--ink);
+  overflow-y: auto;
+}
+.sidebar-logo{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;color:var(--white);padding:8px 12px;margin-bottom:32px;letter-spacing:-0.5px}
+.sidebar-logo span{color:var(--gold)}
+.sidebar-section{font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.3);padding:0 12px;margin-bottom:8px;margin-top:24px}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;transition:all .2s;color:rgba(255,255,255,0.6);font-size:14px;font-weight:400;margin-bottom:2px}
+.sidebar-item:hover{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.9)}
+.sidebar-item.active{background:rgba(200,155,60,0.18);color:var(--gold2)}
+.sidebar-item .icon{width:18px;text-align:center;font-size:16px}
+.sidebar-bottom{margin-top:auto;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08)}
+.sidebar-user{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer}
+.sidebar-user:hover{background:rgba(255,255,255,0.05)}
+.sidebar-avatar{width:34px;height:34px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--white);flex-shrink:0}
+.sidebar-user-info{flex:1;overflow:hidden}
+.sidebar-user-name{font-size:13px;font-weight:500;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sidebar-user-email{font-size:11px;color:rgba(255,255,255,0.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.app-main {
+  flex: 1;
+  margin-left: 240px;
+  background: var(--surface);
+  width: calc(100% - 240px);
+}
+.app-topbar{height:64px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 32px;position:sticky;top:0;z-index:40}
+.app-topbar-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--ink)}
+.app-content {
+  padding: 32px;
+  max-width: 1200px;
+  margin: auto;
+}
+.sub-view{display:none}
+.sub-view.active{display:block}
+
+/* ── DASHBOARD ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px}
+.stat-card{background:var(--white);border-radius:var(--r2);padding:24px;border:1px solid var(--border)}
+.stat-label{font-size:12px;font-weight:500;color:var(--text3);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:8px}
+.stat-value{font-family:'Cormorant Garamond',serif;font-size:40px;font-weight:600;color:var(--ink);line-height:1}
+.stat-change{font-size:12px;color:var(--accent);margin-top:6px;font-weight:400}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.section-header h2{font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--ink)}
+
+/* ── DOCUMENT TABLE ── */
+.doc-table{background:var(--white);border-radius:var(--r2);border:1px solid var(--border);overflow:hidden}
+.doc-table-head{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 140px;padding:12px 20px;background:var(--surface);border-bottom:1px solid var(--border);font-size:11px;font-weight:600;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase}
+.doc-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 140px;padding:16px 20px;border-bottom:1px solid var(--border);align-items:center;transition:background .15s;cursor:pointer}
+.doc-row:last-child{border-bottom:none}
+.doc-row:hover{background:rgba(200,155,60,0.03)}
+.doc-name{font-size:14px;font-weight:500;color:var(--text);display:flex;align-items:center;gap:10px}
+.doc-icon{width:32px;height:32px;background:rgba(200,155,60,0.1);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.doc-meta{font-size:13px;color:var(--text2)}
+.doc-actions{display:flex;gap:6px;justify-content:flex-end}
+.empty-state{padding:64px;text-align:center}
+.empty-icon{font-size:48px;margin-bottom:16px;opacity:0.4}
+.empty-title{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--text2);margin-bottom:8px}
+.empty-sub{font-size:14px;color:var(--text3);font-weight:300}
+
+/* ── UPLOAD ZONE ── */
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--r2);
+  padding: 60px;
+  text-align: center;
+  cursor: pointer;
+  background: var(--white);
+  width: 100%;
+}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--gold);background:rgba(200,155,60,0.04)}
+.upload-icon{font-size:48px;margin-bottom:16px;opacity:0.5}
+.upload-title{font-size:18px;font-weight:500;color:var(--text);margin-bottom:8px}
+.upload-sub{font-size:13px;color:var(--text3);font-weight:300}
+.upload-types{margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.type-badge{background:var(--surface2);padding:4px 10px;border-radius:4px;font-size:11px;font-weight:600;color:var(--text2)}
+
+
+/* ── PREPARE VIEW ── */
+.prepare-layout{display:grid;grid-template-columns:1fr 280px;gap:24px}
+.doc-canvas-wrapper{background:var(--white);border-radius:var(--r2);border:1px solid var(--border);overflow:hidden;position:relative;min-height:800px}
+.doc-canvas-area{padding:32px;display:flex;flex-direction:column;gap:16px;position:relative}
+.doc-page-mock{background:var(--white);box-shadow:0 4px 24px rgba(0,0,0,0.08);width:100%;min-height:700px;position:relative;border-radius:4px;overflow:hidden}
+canvas.pdf-page{max-width:100%;display:block}
+.field-chip{position:absolute;cursor:move;user-select:none;background:rgba(200,155,60,0.15);border:2px dashed var(--gold);border-radius:6px;padding:8px 14px;font-size:17px;color:var(--gold);font-family:'Cormorant Garamond',serif;font-style:italic;display:flex;align-items:center;gap:6px;white-space:nowrap;z-index:10}
+.field-chip .chip-del{width:18px;height:18px;border-radius:50%;background:var(--gold);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;font-family:'DM Sans',sans-serif;font-style:normal;line-height:1;flex-shrink:0}
+.prepare-panel{display:flex;flex-direction:column;gap:16px}
+.panel-card{background:var(--white);border-radius:var(--r2);border:1px solid var(--border);padding:20px}
+.panel-card h3{font-size:15px;font-weight:600;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.field-btn{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--r);background:var(--surface);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--text);cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .2s;margin-bottom:8px;text-align:left}
+.field-btn:hover{border-color:var(--gold);background:rgba(200,155,60,0.05);color:var(--gold)}
+.signer-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.signer-row:last-child{border-bottom:none}
+.signer-avatar{width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--white);flex-shrink:0}
+.signer-info{flex:1}
+.signer-name{font-size:13px;font-weight:500;color:var(--text)}
+.signer-email{font-size:11px;color:var(--text3)}
+
+/* ── SIGN VIEW ── */
+.sign-layout{max-width:900px;margin:0 auto}
+.sign-header-card{background:var(--ink);border-radius:var(--r2);padding:28px 32px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.sign-header-info h2{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--white);margin-bottom:4px}
+.sign-header-info p{font-size:13px;color:rgba(255,255,255,0.5);font-weight:300}
+.sign-steps{display:flex;gap:8px}
+.sign-step{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:100px;font-size:12px;font-weight:600;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.4)}
+.sign-step.done{background:rgba(45,106,79,0.3);color:var(--accent2)}
+.sign-step.active{background:var(--gold);color:var(--white)}
+.sign-doc-area{background:var(--white);border-radius:var(--r2);border:1px solid var(--border);padding:32px;margin-bottom:24px}
+.sign-doc-pages{display:flex;flex-direction:column;gap:16px}
+.sign-page{background:var(--surface);border-radius:8px;min-height:400px;position:relative;overflow:visible;display:flex;align-items:center;justify-content:center}
+.sign-field-placeholder{position:absolute;background:rgba(200,155,60,0.15);border:2px solid var(--gold);border-radius:6px;padding:12px 20px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:18px;color:var(--gold);font-family:'Cormorant Garamond',serif;font-style:italic;transition:all .2s}
+.sign-field-placeholder:hover{background:rgba(200,155,60,0.25);transform:scale(1.02)}
+.sign-field-placeholder.completed{background:rgba(45,106,79,0.1);border-color:var(--accent);color:var(--accent)}
+.sign-actions{background:var(--white);border-radius:var(--r2);border:1px solid var(--border);padding:24px;display:flex;align-items:center;justify-content:space-between}
+.sign-progress{font-size:13px;color:var(--text2)}
+.sign-progress strong{color:var(--text)}
+
+/* ── SIGNATURE MODAL ── */
+.sig-modal{background:var(--white);border-radius:20px;padding:0;width:100%;max-width:600px;box-shadow:0 32px 80px rgba(0,0,0,0.2);overflow:hidden;animation:modalIn 0.3s ease}
+.sig-modal-header{padding:24px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.sig-modal-header h2{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--ink)}
+.sig-tabs{display:flex;gap:0;padding:0 28px;border-bottom:1px solid var(--border);background:var(--surface)}
+.sig-tab{padding:12px 20px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s}
+.sig-tab.active{color:var(--gold);border-bottom-color:var(--gold);background:var(--white)}
+.sig-body{padding:28px}
+#sig-canvas{width:100%;border:1.5px solid var(--border);border-radius:var(--r);cursor:crosshair;touch-action:none;display:block}
+.sig-type-input{width:100%;border:1.5px solid var(--border);border-radius:var(--r);padding:16px;font-family:'Cormorant Garamond',serif;font-size:40px;text-align:center;color:var(--ink);background:var(--white)}
+.sig-type-input:focus{outline:none;border-color:var(--gold)}
+.sig-tools{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center}
+.color-dot{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .2s}
+.color-dot.active{border-color:var(--text);transform:scale(1.2)}
+.sig-modal-footer{padding:16px 28px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:12px}
+
+/* ── COMPLETE VIEW ── */
+.complete-center{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;padding:40px}
+.complete-icon{width:80px;height:80px;border-radius:50%;background:rgba(45,106,79,0.12);display:flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:24px}
+.complete-title{font-family:'Cormorant Garamond',serif;font-size:40px;color:var(--ink);margin-bottom:12px;letter-spacing:-0.5px}
+.complete-sub{font-size:16px;color:var(--text2);font-weight:300;max-width:420px;line-height:1.7;margin-bottom:32px}
+.complete-doc-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:24px;display:flex;align-items:center;gap:16px;margin-bottom:24px;min-width:360px;box-shadow:var(--shadow)}
+.complete-doc-icon{width:48px;height:48px;background:rgba(45,106,79,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.complete-doc-info{flex:1;text-align:left}
+.complete-doc-name{font-size:15px;font-weight:500;color:var(--text);margin-bottom:4px}
+.complete-doc-meta{font-size:12px;color:var(--text3)}
+.audit-list{background:var(--white);border-radius:var(--r2);border:1px solid var(--border);width:100%;max-width:560px;overflow:hidden}
+.audit-item{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;font-size:13px}
+.audit-item:last-child{border-bottom:none}
+.audit-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.audit-text{flex:1;color:var(--text)}
+.audit-time{color:var(--text3)}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:100px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge-pending{background:rgba(200,155,60,0.12);color:#8a6800}
+.badge-sent{background:rgba(60,100,200,0.12);color:#2244bb}
+.badge-signed{background:rgba(45,106,79,0.12);color:var(--accent)}
+.badge-completed{background:rgba(45,106,79,0.2);color:#1a5a38}
+.badge-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
+.badge-draft{background:rgba(100,100,120,0.1);color:var(--text3)}
+
+/* ── NOTIFICATIONS / TOAST ── */
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:10px}
+.toast{background:var(--ink);color:var(--white);padding:14px 20px;border-radius:12px;font-size:13px;box-shadow:var(--shadow2);display:flex;align-items:center;gap:10px;animation:toastIn 0.3s ease;min-width:260px}
+.toast.success{background:#1a3a2a;border-left:3px solid var(--accent2)}
+.toast.error{background:#3a1a1a;border-left:3px solid #e05555}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:24px 0}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+#sub-upload .app-content {
+  max-width: 800px;
+  margin: auto;
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes modalIn{from{opacity:0;transform:scale(0.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .steps-grid{grid-template-columns:1fr 1fr}
+  .stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+  .doc-table-head,.doc-row{grid-template-columns:1fr auto auto}
+  .doc-table {
+  background: var(--white);
+  border-radius: var(--r2);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  width: 100%;
+}
+  .doc-preview-body{grid-template-columns:1fr}
+}
+@media(max-width:640px){
+  .app-layout{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .app-main{margin-left:0}
+  nav{padding:0 20px}
+  .hero{padding:100px 20px 60px}
+  .features{padding:60px 20px}
+  .steps-section{padding:60px 20px}
+  .prepare-layout{grid-template-columns:1fr}
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+
+  .app-main {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .app-content {
+    padding: 16px;
+  }
+}
+
+#track-doc-list {
+  min-height: 200px;
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ LANDING VIEW ═══════════════════════════════ -->
+<div id="view-landing" class="view active">
+  <nav id="main-nav">
+    <div class="nav-logo" onclick="scrollTo(0,0)">Kaya<span>s</span></div>
+    <div class="nav-links">
+      <a onclick="scrollToSection('features')">Features</a>
+      <a onclick="scrollToSection('how-it-works')">How it works</a>
+      <a onclick="scrollToSection('pricing')">Pricing</a>
+    </div>
+    <div class="nav-cta">
+      <button class="btn btn-outline" onclick="openModal('login')">Sign in</button>
+      <button class="btn btn-gold" onclick="openModal('signup')">Get started free</button>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-badge">✦ Trusted by 12,000+ professionals</div>
+    <h1>Sign documents<br/>with <em>confidence.</em></h1>
+    <p>Kayas is the simplest way to collect legally binding e-signatures. Upload, prepare, send — done in minutes.</p>
+    <div class="hero-actions">
+      <button class="btn btn-primary btn-lg" onclick="openModal('signup')">Start signing for free</button>
+      <button class="btn btn-outline btn-lg" onclick="demoMode()">▶ See a demo</button>
+    </div>
+
+    <div class="hero-visual">
+      <div class="doc-preview">
+        <div class="doc-preview-header">
+          <div class="doc-preview-dot" style="background:#e05555"></div>
+          <div class="doc-preview-dot" style="background:#e0a055"></div>
+          <div class="doc-preview-dot" style="background:#55cc88"></div>
+          <span style="margin-left:auto;font-size:11px;color:rgba(255,255,255,0.4);font-family:'DM Sans',sans-serif">NDA_Agreement_2025.pdf</span>
+        </div>
+        <div class="doc-preview-body">
+          <div class="doc-lines">
+            <div class="doc-line short" style="background:#e0dbd0;height:8px"></div>
+            <div class="doc-line wide"></div>
+            <div class="doc-line wide"></div>
+            <div class="doc-line med"></div>
+            <div style="height:12px"></div>
+            <div class="doc-line short" style="background:#e0dbd0;height:8px"></div>
+            <div class="doc-line wide"></div>
+            <div class="doc-line wide"></div>
+            <div class="doc-line wide"></div>
+            <div class="doc-line med"></div>
+            <div style="height:12px"></div>
+            <div class="doc-line short" style="background:#e0dbd0;height:8px"></div>
+            <div class="doc-line wide"></div>
+            <div class="doc-line wide"></div>
+            <div class="doc-line short"></div>
+            <div style="height:20px"></div>
+            <div class="doc-line gold" style="height:40px;border-radius:6px;border:2px dashed rgba(200,155,60,0.4)"></div>
+          </div>
+          <div class="doc-sidebar">
+            <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:4px">Signers</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:28px;height:28px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--white)">AK</div>
+                <div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--text)">Arjun Kumar</div><span class="badge badge-signed"><span class="badge-dot"></span>Signed</span></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:28px;height:28px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--text2)">PM</div>
+                <div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--text)">Priya Mehta</div><span class="badge badge-pending"><span class="badge-dot"></span>Pending</span></div>
+              </div>
+            </div>
+            <div class="divider" style="margin:12px 0"></div>
+            <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Progress</div>
+            <div style="background:var(--surface2);border-radius:100px;height:6px;overflow:hidden"><div style="width:50%;height:100%;background:var(--gold);border-radius:100px"></div></div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px">1 of 2 signed</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-scroll"><div class="hero-scroll-dot"></div>Scroll to explore</div>
+  </section>
+
+  <section class="features" id="features">
+    <div class="section-label">What we offer</div>
+    <h2 class="section-title">Everything you need<br/>to close faster</h2>
+    <p class="section-sub">From first signature to final document — Kayas handles the entire signing workflow with elegance.</p>
+    <div class="features-grid">
+      <div class="feature-card"><div class="feature-icon">📄</div><h3>PDF & Word Support</h3><p>Upload any PDF or Word document. We render it beautifully and let you place fields exactly where you need them.</p></div>
+      <div class="feature-card"><div class="feature-icon">✍️</div><h3>Multiple Signature Modes</h3><p>Draw your signature, type it in a beautiful cursive font, or upload an image — all legally binding.</p></div>
+      <div class="feature-card"><div class="feature-icon">📧</div><h3>Instant Email Delivery</h3><p>Signers receive a secure link by email. No account required. They sign in seconds from any device.</p></div>
+      <div class="feature-card"><div class="feature-icon">🔒</div><h3>Tamper-proof Audit Trail</h3><p>Every action is logged — timestamp, IP address, device. Your signed documents are legally defensible.</p></div>
+      <div class="feature-card"><div class="feature-icon">⚡</div><h3>Reusable Templates</h3><p>Save frequently used documents as templates. Prefill fields and send in one click — no rework.</p></div>
+      <div class="feature-card"><div class="feature-icon">📊</div><h3>Real-time Tracking</h3><p>Watch your documents move through the signing process. Get notified the moment each signer completes.</p></div>
+    </div>
+  </section>
+
+  <section class="steps-section" id="how-it-works">
+    <div class="steps-inner">
+      <div class="section-label" style="color:var(--gold2)">How it works</div>
+      <h2 class="section-title" style="color:var(--white)">Simple as 1, 2, 3, 4</h2>
+      <div class="steps-grid">
+        <div class="step"><div class="step-num">1</div><h3>Upload your document</h3><p>Drag and drop a PDF or Word file. We render it instantly in your browser.</p></div>
+        <div class="step"><div class="step-num">2</div><h3>Place signature fields</h3><p>Drag fields onto the document — signatures, initials, dates, text boxes.</p></div>
+        <div class="step"><div class="step-num">3</div><h3>Send to signers</h3><p>Add signer emails and send. Each gets a unique, secure signing link.</p></div>
+        <div class="step"><div class="step-num">4</div><h3>Download & done</h3><p>Once all parties sign, download the completed PDF with embedded signatures.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="features" id="pricing">
+    <div class="section-label">Pricing</div>
+    <h2 class="section-title">Fair, simple pricing</h2>
+    <div class="features-grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
+      <div class="feature-card" style="padding:32px">
+        <div style="font-size:13px;font-weight:600;color:var(--text3);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.08em">Free</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:48px;font-weight:600;color:var(--ink);margin-bottom:4px">₹0</div>
+        <div style="font-size:13px;color:var(--text3);margin-bottom:24px">Forever free</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px">
+          <div style="font-size:13px;color:var(--text2);display:flex;gap:8px"><span style="color:var(--accent)">✓</span>3 documents/month</div>
+          <div style="font-size:13px;color:var(--text2);display:flex;gap:8px"><span style="color:var(--accent)">✓</span>Up to 2 signers</div>
+          <div style="font-size:13px;color:var(--text2);display:flex;gap:8px"><span style="color:var(--accent)">✓</span>Basic audit trail</div>
+        </div>
+        <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="openModal('signup')">Get started</button>
+      </div>
+      <div class="feature-card" style="padding:32px;border-color:var(--gold);background:rgba(200,155,60,0.04)">
+        <div style="font-size:13px;font-weight:600;color:var(--gold);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.08em">Pro ✦ Popular</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:48px;font-weight:600;color:var(--ink);margin-bottom:4px">₹799</div>
+        <div style="font-size:13px;color:var(--text3);margin-bottom:24px">per month</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px">
+          <div style="font-size:13px;color:var(--text2);display:flex;gap:8px"><span style="color:var(--accent)">✓</span>Unlimited documents</div>
+          <div style="font-size:13px;color:var(--text2);display:flex;gap:8px"><span style="color:var(--accent)">✓</span>Up to 10 signers</div>
+          <div style="font-size:13px;color:var(--text2);display:flex;gap:8px"><span style="color:var(--accent)">✓</span>Templates & bulk send</div>
+          <div style="font-size:13px;color:var(--text2);display:flex;gap:8px"><span style="color:var(--accent)">✓</span>Full audit trail</div>
+        </div>
+        <button class="btn btn-gold" style="width:100%;justify-content:center" onclick="openModal('signup')">Start free trial</button>
+      </div>
+      <div class="feature-card" style="padding:32px">
+        <div style="font-size:13px;font-weight:600;color:var(--text3);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.08em">Enterprise</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:48px;font-weight:600;color:var(--ink);margin-bottom:4px">Custom</div>
+        <div style="font-size:13px;color:var(--text3);margin-bottom:24px">Contact us</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px">
+          <div style="font-size:13px;color:var(--text2);display:flex;gap:8px"><span style="color:var(--accent)">✓</span>Everything in Pro</div>
+          <div style="font-size:13px;color:var(--text2);display:flex;gap:8px"><span style="color:var(--accent)">✓</span>API access</div>
+          <div style="font-size:13px;color:var(--text2);display:flex;gap:8px"><span style="color:var(--accent)">✓</span>SSO & team management</div>
+          <div style="font-size:13px;color:var(--text2);display:flex;gap:8px"><span style="color:var(--accent)">✓</span>Priority support</div>
+        </div>
+        <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="showToast('Our team will contact you soon!','success')">Contact sales</button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="landing-footer">
+    <div class="footer-logo">Kaya<span>s</span></div>
+    <div class="footer-links">
+      <a onclick="showToast('Privacy policy coming soon')">Privacy</a>
+      <a onclick="showToast('Terms coming soon')">Terms</a>
+      <a onclick="showToast('Security docs coming soon')">Security</a>
+      <a onclick="showToast('Help center coming soon')">Help</a>
+    </div>
+    <div class="footer-copy">© 2025 Kayas Technologies Pvt. Ltd. All rights reserved.</div>
+  </footer>
+</div>
+
+<!-- ═══════════════════════════════ APP VIEW ═══════════════════════════════ -->
+<div id="view-app" class="view">
+  <div class="app-layout">
+    <div class="sidebar">
+      <div class="sidebar-logo">Kaya<span>s</span></div>
+      <div class="sidebar-section">Main</div>
+      <div class="sidebar-item active" onclick="setAppView('dashboard')" id="nav-dashboard"><span class="icon">🏠</span> Dashboard</div>
+      <div class="sidebar-item" onclick="setAppView('upload')" id="nav-upload"><span class="icon">⬆️</span> New Document</div>
+      <div class="sidebar-item" onclick="setAppView('track')" id="nav-track"><span class="icon">📋</span> All Documents</div>
+      <div class="sidebar-section">Tools</div>
+      <div class="sidebar-item" onclick="setAppView('templates')" id="nav-templates"><span class="icon">📐</span> Templates</div>
+      <div class="sidebar-item" onclick="showToast('Contacts coming soon!','success')"><span class="icon">👥</span> Contacts</div>
+      <div class="sidebar-item" onclick="showToast('Reports coming soon!','success')"><span class="icon">📊</span> Reports</div>
+      <div class="sidebar-bottom">
+        <div class="sidebar-item" onclick="showToast('Settings coming soon!','success')"><span class="icon">⚙️</span> Settings</div>
+        <div class="sidebar-user" onclick="logout()">
+          <div class="sidebar-avatar" id="sidebar-avatar">?</div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebar-name">User</div>
+            <div class="sidebar-user-email" id="sidebar-email">user@kayas.in</div>
+          </div>
+          <span style="font-size:12px;color:rgba(255,255,255,0.3)" title="Sign out">↩</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="app-main">
+
+      <!-- DASHBOARD -->
+      <div id="sub-dashboard" class="sub-view active">
+        <div class="app-topbar">
+          <div class="app-topbar-title">Dashboard</div>
+          <button class="btn btn-gold btn-sm" onclick="setAppView('upload')">+ New Document</button>
+        </div>
+        <div class="app-content">
+          <div class="stats-row">
+            <div class="stat-card"><div class="stat-label">Total Documents</div><div class="stat-value" id="stat-total">0</div><div class="stat-change">All time</div></div>
+            <div class="stat-card"><div class="stat-label">Pending Signatures</div><div class="stat-value" id="stat-pending" style="color:var(--gold)">0</div><div class="stat-change" style="color:var(--gold)">Awaiting</div></div>
+            <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value" id="stat-complete" style="color:var(--accent)">0</div><div class="stat-change" style="color:var(--accent)">Fully signed</div></div>
+            <div class="stat-card"><div class="stat-label">This Month</div><div class="stat-value" id="stat-month">0</div><div class="stat-change">Documents sent</div></div>
+          </div>
+          <div class="section-header">
+            <h2>Recent Documents</h2>
+            <button class="btn btn-outline btn-sm" onclick="setAppView('track')">View all</button>
+          </div>
+          <div class="doc-table">
+            <div class="doc-table-head">
+              <div>Document</div><div class="col-signers">Signers</div><div class="col-created">Date</div><div>Status</div><div style="text-align:right">Actions</div>
+            </div>
+            <div id="dashboard-doc-list">
+              <div class="empty-state">
+                <div class="empty-icon">📄</div>
+                <div class="empty-title">No documents yet</div>
+                <div class="empty-sub">Upload your first document to get started</div>
+                <br/><button class="btn btn-gold" onclick="setAppView('upload')">Upload a Document</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- UPLOAD -->
+      <div id="sub-upload" class="sub-view">
+        <div class="app-topbar"><div class="app-topbar-title">New Document</div></div>
+        <div class="app-content" style="max-width:700px">
+          <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+            <input type="file" id="file-input" accept=".pdf,.docx,.doc" style="display:none" onchange="handleFileUpload(this)"/>
+            <div class="upload-icon">📁</div>
+            <div class="upload-title">Drop your document here</div>
+            <div class="upload-sub">or click to browse your files</div>
+            <div class="upload-types">
+              <span class="type-badge">PDF</span><span class="type-badge">DOCX</span><span class="type-badge">DOC</span>
+            </div>
+          </div>
+          <div style="margin-top:32px">
+            <h3 style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--ink);margin-bottom:20px">Or start with a template</h3>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+              <div class="feature-card" style="padding:20px;cursor:pointer" onclick="useTemplate('NDA Agreement')"><div style="font-size:24px;margin-bottom:12px">📝</div><div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px">NDA Agreement</div><div style="font-size:12px;color:var(--text3)">Non-disclosure agreement template</div></div>
+              <div class="feature-card" style="padding:20px;cursor:pointer" onclick="useTemplate('Employment Contract')"><div style="font-size:24px;margin-bottom:12px">💼</div><div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px">Employment Contract</div><div style="font-size:12px;color:var(--text3)">Standard employment agreement</div></div>
+              <div class="feature-card" style="padding:20px;cursor:pointer" onclick="useTemplate('Service Agreement')"><div style="font-size:24px;margin-bottom:12px">🤝</div><div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px">Service Agreement</div><div style="font-size:12px;color:var(--text3)">Client service contract template</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PREPARE -->
+      <div id="sub-prepare" class="sub-view">
+        <div class="app-topbar">
+          <div class="app-topbar-title" id="prepare-title">Prepare Document</div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-outline btn-sm" onclick="setAppView('dashboard')">Cancel</button>
+            <button class="btn btn-gold btn-sm" onclick="openSendModal()">Send for Signing →</button>
+          </div>
+        </div>
+        <div class="app-content">
+          <div class="prepare-layout">
+            <div class="doc-canvas-wrapper">
+              <div class="doc-canvas-area" id="doc-canvas-area">
+                <div class="doc-page-mock" id="doc-page-1">
+                  <canvas id="pdf-render-canvas" style="max-width:100%;display:block"></canvas>
+                  <div id="doc-text-mock" style="padding:40px"></div>
+                </div>
+              </div>
+            </div>
+            <div class="prepare-panel">
+              <div class="panel-card">
+                <h3>📌 Add Fields</h3>
+                <p style="font-size:13px;color:var(--text3);margin-bottom:14px;font-weight:300">Click a field type to place it on the document</p>
+                <button class="field-btn" onclick="addField('signature')">✍️ Signature field</button>
+                <button class="field-btn" onclick="addField('initials')">🔤 Initials</button>
+                <button class="field-btn" onclick="addField('date')">📅 Date signed</button>
+                <button class="field-btn" onclick="addField('text')">📝 Text input</button>
+                <button class="field-btn" onclick="addField('checkbox')">☑️ Checkbox</button>
+              </div>
+              <div class="panel-card">
+                <h3>👤 Signers</h3>
+                <div id="signer-list-prepare"><div style="font-size:13px;color:var(--text3);text-align:center;padding:12px 0">No signers added yet</div></div>
+                <button class="btn btn-outline btn-sm" style="width:100%;margin-top:12px;justify-content:center" onclick="addSigner()">+ Add signer</button>
+              </div>
+              <div class="panel-card">
+                <h3>📄 Document</h3>
+                <div style="font-size:13px;color:var(--text2)" id="doc-info-panel"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIGN -->
+      <div id="sub-sign" class="sub-view">
+        <div class="app-topbar">
+          <div class="app-topbar-title">Sign Document</div>
+          <div class="badge badge-pending"><span class="badge-dot"></span>Action required</div>
+        </div>
+        <div class="app-content">
+          <div class="sign-layout">
+            <div class="sign-header-card">
+              <div class="sign-header-info">
+                <h2 id="sign-doc-name">Document.pdf</h2>
+                <p id="sign-from">Sent by User</p>
+              </div>
+              <div class="sign-steps">
+                <div class="sign-step active" id="sign-step-1">1 Review</div>
+                <div class="sign-step" id="sign-step-2">2 Sign</div>
+                <div class="sign-step" id="sign-step-3">3 Complete</div>
+              </div>
+            </div>
+            <div class="sign-doc-area">
+              <div id="sign-doc-pages" class="sign-doc-pages"></div>
+            </div>
+            <div class="sign-actions">
+              <div class="sign-progress">Fields remaining: <strong id="fields-remaining">0</strong></div>
+              <div style="display:flex;gap:10px">
+                <button class="btn btn-outline btn-sm" onclick="setAppView('dashboard')">Cancel</button>
+                <button class="btn btn-green" id="finish-sign-btn" onclick="finishSigning()" disabled>Finish Signing</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRACK -->
+      <div id="sub-track" class="sub-view">
+        <div class="app-topbar">
+          <div class="app-topbar-title">All Documents</div>
+          <button class="btn btn-gold btn-sm" onclick="setAppView('upload')">+ New Document</button>
+        </div>
+        <div class="app-content">
+          <div class="doc-table">
+            <div class="doc-table-head">
+              <div>Document</div><div class="col-signers">Signers</div><div class="col-created">Created</div><div>Status</div><div style="text-align:right">Actions</div>
+            </div>
+            <div id="track-doc-list">
+              <div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No documents yet</div><div class="empty-sub">Your documents will appear here</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TEMPLATES -->
+      <div id="sub-templates" class="sub-view">
+        <div class="app-topbar">
+          <div class="app-topbar-title">Templates</div>
+          <button class="btn btn-gold btn-sm" onclick="showToast('Template builder coming soon!','success')">+ Create Template</button>
+        </div>
+        <div class="app-content">
+          <div class="features-grid">
+            <div class="feature-card" style="cursor:pointer" onclick="useTemplate('NDA Agreement')"><div class="feature-icon">📝</div><h3>NDA Agreement</h3><p style="font-size:13px">Non-disclosure agreement. Use for protecting confidential information with clients and partners.</p><div style="margin-top:16px"><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();useTemplate('NDA Agreement')">Use template</button></div></div>
+            <div class="feature-card" style="cursor:pointer" onclick="useTemplate('Employment Contract')"><div class="feature-icon">💼</div><h3>Employment Contract</h3><p style="font-size:13px">Standard employment agreement covering roles, responsibilities, compensation and benefits.</p><div style="margin-top:16px"><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();useTemplate('Employment Contract')">Use template</button></div></div>
+            <div class="feature-card" style="cursor:pointer" onclick="useTemplate('Service Agreement')"><div class="feature-icon">🤝</div><h3>Service Agreement</h3><p style="font-size:13px">Client service contract for freelancers and agencies. Covers deliverables and payment terms.</p><div style="margin-top:16px"><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();useTemplate('Service Agreement')">Use template</button></div></div>
+            <div class="feature-card" style="cursor:pointer" onclick="useTemplate('Lease Agreement')"><div class="feature-icon">🏠</div><h3>Lease Agreement</h3><p style="font-size:13px">Residential or commercial lease agreement with customizable terms and conditions.</p><div style="margin-top:16px"><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();useTemplate('Lease Agreement')">Use template</button></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMPLETE -->
+      <div id="sub-complete" class="sub-view">
+        <div class="app-topbar"><div class="app-topbar-title">Signing Complete</div></div>
+        <div class="app-content">
+          <div class="complete-center">
+            <div class="complete-icon">✅</div>
+            <h2 class="complete-title">Document Signed!</h2>
+            <p class="complete-sub">All parties have signed. The completed document has been secured with a tamper-proof audit trail.</p>
+            <div class="complete-doc-card">
+              <div class="complete-doc-icon">📄</div>
+              <div class="complete-doc-info">
+                <div class="complete-doc-name" id="complete-doc-name">Document.pdf</div>
+                <div class="complete-doc-meta" id="complete-doc-meta">Signed · All parties</div>
+              </div>
+              <button class="btn btn-green btn-sm" onclick="downloadDoc()">⬇ Download</button>
+            </div>
+            <div style="width:100%;max-width:560px;text-align:left;margin-bottom:16px">
+              <h3 style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--ink);margin-bottom:12px">Audit Trail</h3>
+            </div>
+            <div class="audit-list" id="audit-list"></div>
+            <div style="margin-top:24px;display:flex;gap:12px">
+              <button class="btn btn-outline" onclick="setAppView('dashboard')">Back to Dashboard</button>
+              <button class="btn btn-gold" onclick="setAppView('upload')">Send Another</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ MODALS ═══════════════════════════════ -->
+
+<!-- Auth Modal -->
+<div class="modal-overlay" id="auth-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('auth-modal')">✕</button>
+    <div class="modal-logo">Kaya<span>s</span></div>
+    <div class="modal-sub" id="auth-modal-sub">Sign in to continue</div>
+    <div class="modal-tabs">
+      <div class="modal-tab active" id="tab-login" onclick="switchAuthTab('login')">Sign In</div>
+      <div class="modal-tab" id="tab-signup" onclick="switchAuthTab('signup')">Create Account</div>
+    </div>
+    <div id="login-form">
+      <div class="form-group"><label>Email Address</label><input type="email" id="login-email" placeholder="you@company.com" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+      <div class="form-group"><label>Password</label><input type="password" id="login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+      <div class="form-error" id="login-error">Invalid email or password.</div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:13px" onclick="doLogin()">Sign In →</button>
+      <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--text3)">
+        Demo: <strong style="color:var(--text)">demo@kayas.in</strong> / <strong style="color:var(--text)">demo123</strong>
+      </div>
+    </div>
+    <div id="signup-form" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label>First Name</label><input type="text" id="signup-fname" placeholder="Arjun"/></div>
+        <div class="form-group"><label>Last Name</label><input type="text" id="signup-lname" placeholder="Kumar"/></div>
+      </div>
+      <div class="form-group"><label>Email Address</label><input type="email" id="signup-email" placeholder="you@company.com"/></div>
+      <div class="form-group"><label>Password</label><input type="password" id="signup-password" placeholder="Min. 6 characters"/></div>
+      <div class="form-error" id="signup-error">Please fill all fields correctly.</div>
+      <button class="btn btn-gold" style="width:100%;justify-content:center;padding:13px" onclick="doSignup()">Create Free Account →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Send Modal -->
+<div class="modal-overlay" id="send-modal">
+  <div class="modal" style="max-width:520px">
+    <button class="modal-close" onclick="closeModal('send-modal')">✕</button>
+    <h2 style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--ink);margin-bottom:6px">Send for Signing</h2>
+    <p style="font-size:14px;color:var(--text2);margin-bottom:24px;font-weight:300">Add signers and a message to send your document</p>
+    <div>
+      <div style="font-size:12px;font-weight:600;color:var(--text2);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:12px">Signers</div>
+      <div id="send-signer-rows"></div>
+      <button class="btn btn-outline btn-sm" onclick="addSignerRow()" style="margin-bottom:20px">+ Add another signer</button>
+    </div>
+    <div class="form-group">
+      <label>Message (optional)</label>
+      <textarea id="send-message" placeholder="Please review and sign this document at your earliest convenience..."></textarea>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:10px">
+      <button class="btn btn-outline" onclick="closeModal('send-modal')">Cancel</button>
+      <button class="btn btn-gold" onclick="sendDocument()">Send Document ✉️</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Signer Modal -->
+<div class="modal-overlay" id="add-signer-modal">
+  <div class="modal" style="max-width:400px">
+    <button class="modal-close" onclick="closeModal('add-signer-modal')">✕</button>
+    <h2 style="font-family:'Cormorant Garamond',serif;font-size:22px;margin-bottom:20px">Add Signer</h2>
+    <div class="form-group"><label>Full Name</label><input type="text" id="new-signer-name" placeholder="Priya Mehta"/></div>
+    <div class="form-group"><label>Email</label><input type="email" id="new-signer-email" placeholder="priya@company.com"/></div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:4px">
+      <button class="btn btn-outline" onclick="closeModal('add-signer-modal')">Cancel</button>
+      <button class="btn btn-gold" onclick="confirmAddSigner()">Add Signer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Signature Modal -->
+<div class="modal-overlay" id="sig-modal-overlay">
+  <div class="sig-modal">
+    <div class="sig-modal-header">
+      <h2>Create Your Signature</h2>
+      <button class="modal-close" style="position:static" onclick="closeModal('sig-modal-overlay')">✕</button>
+    </div>
+    <div class="sig-tabs">
+      <div class="sig-tab active" id="sig-tab-draw" onclick="switchSigTab('draw')">✏️ Draw</div>
+      <div class="sig-tab" id="sig-tab-type" onclick="switchSigTab('type')">⌨️ Type</div>
+      <div class="sig-tab" id="sig-tab-upload" onclick="switchSigTab('upload')">📷 Upload</div>
+    </div>
+    <div class="sig-body">
+      <div id="sig-draw-panel">
+        <canvas id="sig-canvas" width="540" height="160"></canvas>
+        <div class="sig-tools">
+          <span style="font-size:12px;color:var(--text3)">Color:</span>
+          <div class="color-dot active" style="background:#0d0d12" onclick="setSigColor('#0d0d12',this)"></div>
+          <div class="color-dot" style="background:#1a3a8a" onclick="setSigColor('#1a3a8a',this)"></div>
+          <div class="color-dot" style="background:#8a1a1a" onclick="setSigColor('#8a1a1a',this)"></div>
+          <span style="margin-left:auto"></span>
+          <button class="btn btn-outline btn-sm" onclick="clearSigCanvas()">Clear</button>
+        </div>
+      </div>
+      <div id="sig-type-panel" style="display:none">
+        <input class="sig-type-input" id="sig-type-text" type="text" placeholder="Type your name" oninput="renderTypedSig()"/>
+        <canvas id="sig-type-canvas" width="540" height="100" style="display:none;margin-top:12px;border-radius:8px;border:1px solid var(--border);width:100%"></canvas>
+        <div class="sig-tools">
+          <span style="font-size:12px;color:var(--text3)">Style:</span>
+          <span style="font-family:'Cormorant Garamond',serif;font-size:20px;cursor:pointer;padding:4px 8px;border-radius:4px;border:1px solid var(--border)" onclick="sigTypeFont='Cormorant Garamond';renderTypedSig()">Classic</span>
+          <span style="font-family:cursive;font-size:20px;cursor:pointer;padding:4px 8px;border-radius:4px;border:1px solid var(--border)" onclick="sigTypeFont='cursive';renderTypedSig()">Cursive</span>
+        </div>
+      </div>
+      <div id="sig-upload-panel" style="display:none;text-align:center;padding:20px 0">
+        <div class="upload-zone" style="padding:32px" onclick="document.getElementById('sig-upload-input').click()">
+          <input type="file" id="sig-upload-input" accept="image/*" style="display:none" onchange="handleSigUpload(this)"/>
+          <div style="font-size:36px;margin-bottom:10px">🖼️</div>
+          <div style="font-size:14px;font-weight:500;color:var(--text)">Upload signature image</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:4px">PNG or JPG with transparent background</div>
+        </div>
+        <canvas id="sig-upload-canvas" width="540" height="120" style="display:none;margin-top:12px;border-radius:8px;border:1px solid var(--border);width:100%"></canvas>
+      </div>
+    </div>
+    <div class="sig-modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('sig-modal-overlay')">Cancel</button>
+      <button class="btn btn-green" onclick="applySignature()">Apply Signature ✓</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ═══════════════════════════════ STATE ═══════════════════════════════
+const STATE = {
+  user: null,
+  users: [{name:'Demo User',email:'demo@kayas.in',password:'demo123',initials:'DU'}],
+  documents: [],
+  currentDoc: null,
+  placedFields: [],
+  signers: [],
+  signerSigs: {},
+  currentSigField: null,
+  sigColor: '#0d0d12',
+  sigTypeFont: 'Cormorant Garamond',
+  sigCanvas: null,
+  sigCtx: null,
+  dragField: null,
+  dragOffset: {x:0,y:0},
+  pdfDoc: null,
+  docFile: null,
+};
+
+// ═══════════════════════════════ LANDING NAV ═══════════════════════════════
+window.addEventListener('scroll',()=>{
+  document.getElementById('main-nav')?.classList.toggle('scrolled', window.scrollY > 10);
+});
+
+function scrollToSection(id){
+  document.getElementById(id)?.scrollIntoView({behavior:'smooth'});
+}
+
+function demoMode(){
+  openModal('login');
+  setTimeout(()=>{
+    document.getElementById('login-email').value = 'demo@kayas.in';
+    document.getElementById('login-password').value = 'demo123';
+  }, 300);
+}
+
+// ═══════════════════════════════ MODALS ═══════════════════════════════
+function openModal(type){
+  if(type==='login'||type==='signup'){
+    document.getElementById('auth-modal').classList.add('open');
+    switchAuthTab(type);
+  }
+}
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); });
+});
+
+function switchAuthTab(tab){
+  document.getElementById('login-form').style.display = tab==='login' ? 'block' : 'none';
+  document.getElementById('signup-form').style.display = tab==='signup' ? 'block' : 'none';
+  document.getElementById('tab-login').classList.toggle('active', tab==='login');
+  document.getElementById('tab-signup').classList.toggle('active', tab==='signup');
+  document.getElementById('auth-modal-sub').textContent = tab==='login' ? 'Sign in to continue' : 'Create your free account';
+}
+
+// ═══════════════════════════════ AUTH ═══════════════════════════════
+function doLogin(){
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-password').value;
+  const user = STATE.users.find(u => u.email===email && u.password===pass);
+  if(!user){
+    document.getElementById('login-error').classList.add('show');
+    return;
+  }
+  document.getElementById('login-error').classList.remove('show');
+  loginUser(user);
+}
+
+function doSignup(){
+  const fn = document.getElementById('signup-fname').value.trim();
+  const ln = document.getElementById('signup-lname').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const pass = document.getElementById('signup-password').value;
+  if(!fn||!ln||!email||pass.length<6){
+    document.getElementById('signup-error').classList.add('show');
+    return;
+  }
+  const initials = (fn[0]+ln[0]).toUpperCase();
+  const user = {name:`${fn} ${ln}`, email, password:pass, initials};
+  STATE.users.push(user);
+  loginUser(user);
+}
+
+function loginUser(user){
+  STATE.user = user;
+  closeModal('auth-modal');
+  document.getElementById('sidebar-name').textContent = user.name;
+  document.getElementById('sidebar-email').textContent = user.email;
+  document.getElementById('sidebar-avatar').textContent = user.initials || user.name[0].toUpperCase();
+  showView('view-app');
+  setAppView('dashboard');
+  updateStats();
+  showToast(`Welcome back, ${user.name.split(' ')[0]}!`, 'success');
+}
+
+function logout(){
+  STATE.user = null;
+  showView('view-landing');
+  showToast('Signed out successfully', 'success');
+}
+
+// ═══════════════════════════════ VIEWS ═══════════════════════════════
+function showView(id){
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function setAppView(view){
+  document.querySelectorAll('.sub-view').forEach(v => {
+    v.classList.remove('active');
+    v.style.display = 'none';
+  });
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  const el = document.getElementById('sub-'+view);
+  if(el){ el.style.display = 'block'; el.classList.add('active'); }
+  const nav = document.getElementById('nav-'+view);
+  if(nav) nav.classList.add('active');
+  if(view==='dashboard'){ updateStats(); renderDocList(); }
+  if(view==='track') renderTrackList();
+  window.scrollTo(0,0);
+}
+
+// ═══════════════════════════════ UPLOAD ═══════════════════════════════
+const uploadZone = document.getElementById('upload-zone');
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if(file) processFile(file);
+});
+
+function handleFileUpload(input){
+  const file = input.files[0];
+  if(file) processFile(file);
+}
+
+async function processFile(file){
+  const isPdf = file.type === 'application/pdf';
+  STATE.docFile = file;
+  STATE.placedFields = [];
+  STATE.signers = [];
+
+  const doc = {
+    id: Date.now(),
+    name: file.name,
+    size: formatSize(file.size),
+    type: file.type,
+    status: 'draft',
+    created: new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}),
+    signers: [],
+    audit: [],
+    blob: URL.createObjectURL(file),
+  };
+  STATE.currentDoc = doc;
+  STATE.documents.unshift(doc);
+
+  document.getElementById('prepare-title').textContent = file.name;
+  document.getElementById('doc-info-panel').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div><span style="color:var(--text3)">Name:</span> ${file.name}</div>
+      <div><span style="color:var(--text3)">Size:</span> ${formatSize(file.size)}</div>
+      <div><span style="color:var(--text3)">Type:</span> ${isPdf?'PDF Document':'Word Document'}</div>
+    </div>
+  `;
+
+  // Clear old fields from doc-page-1
+  const page = document.getElementById('doc-page-1');
+  page.querySelectorAll('.field-chip').forEach(el => el.remove());
+
+  if(isPdf){
+    await renderPDF(doc.blob);
+  } else {
+    renderTextMock(file.name);
+  }
+  setAppView('prepare');
+  renderSignersPrepare();
+  showToast('Document uploaded successfully', 'success');
+}
+
+async function renderPDF(url){
+  try{
+    if(typeof pdfjsLib === 'undefined'){ renderTextMock(''); return; }
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const pdfDoc = await pdfjsLib.getDocument(url).promise;
+    STATE.pdfDoc = pdfDoc;
+    const page = await pdfDoc.getPage(1);
+    const viewport = page.getViewport({scale:1.5});
+    const canvas = document.getElementById('pdf-render-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    canvas.style.display = 'block';
+    document.getElementById('doc-text-mock').style.display = 'none';
+    await page.render({canvasContext:ctx, viewport}).promise;
+    document.getElementById('doc-page-1').style.minHeight = viewport.height + 'px';
+  }catch(e){
+    renderTextMock('');
+  }
+}
+
+function renderTextMock(name){
+  document.getElementById('pdf-render-canvas').style.display = 'none';
+  document.getElementById('doc-text-mock').style.display = 'block';
+  document.getElementById('doc-text-mock').innerHTML = `
+    <div style="max-width:600px;margin:0 auto">
+      <div style="text-align:center;margin-bottom:32px">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--ink);margin-bottom:4px">${name||'Sample Document'}</div>
+        <div style="font-size:13px;color:var(--text3)">Document preview</div>
+      </div>
+      ${mockLines(5)}
+      <div style="margin-top:32px;padding:16px;border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--text2)">
+        <strong>Section 1: Parties</strong><br/>This agreement is entered into between the undersigned parties as of the date indicated below.
+      </div>
+      ${mockLines(3)}
+      <div style="margin-top:24px;padding:16px;border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--text2)">
+        <strong>Section 2: Terms</strong><br/>The parties agree to the following terms and conditions as outlined in this document.
+      </div>
+      ${mockLines(4)}
+    </div>
+  `;
+}
+
+function mockLines(count=5){
+  const widths = ['100%','85%','92%','70%','100%','78%','95%'];
+  return Array.from({length:count},(_,i)=>`<div style="height:10px;background:var(--surface2);border-radius:4px;margin-bottom:10px;width:${widths[i%widths.length]}"></div>`).join('');
+}
+
+function useTemplate(name){
+  const doc = {
+    id: Date.now(),
+    name: `${name}.pdf`,
+    size: '48 KB',
+    type: 'application/pdf',
+    status: 'draft',
+    created: new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}),
+    signers: [],
+    audit: [],
+    blob: null,
+  };
+  STATE.currentDoc = doc;
+  STATE.documents.unshift(doc);
+  STATE.placedFields = [];
+  STATE.signers = [];
+  document.getElementById('prepare-title').textContent = `${name}.pdf`;
+  document.getElementById('doc-info-panel').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div><span style="color:var(--text3)">Template:</span> ${name}</div>
+      <div><span style="color:var(--text3)">Type:</span> PDF Document</div>
+    </div>
+  `;
+  const page = document.getElementById('doc-page-1');
+  page.querySelectorAll('.field-chip').forEach(el => el.remove());
+  renderTextMock(name);
+  document.getElementById('pdf-render-canvas').style.display = 'none';
+  setAppView('prepare');
+  renderSignersPrepare();
+  showToast(`Template "${name}" loaded`, 'success');
+}
+
+// ═══════════════════════════════ FIELDS ═══════════════════════════════
+function addField(type){
+  const area = document.getElementById('doc-page-1');
+  const labels = {signature:'✍ Sign here', initials:'Initials', date:'📅 Date', text:'📝 Text', checkbox:'☑ Check'};
+  const id = 'field_' + Date.now();
+  const chip = document.createElement('div');
+  chip.className = 'field-chip';
+  chip.id = id;
+  chip.style.left = '40px';
+  chip.style.top = (60 + STATE.placedFields.length * 70) + 'px';
+  chip.dataset.type = type;
+  chip.innerHTML = `${labels[type]}<span class="chip-del" onclick="removeField('${id}')">✕</span>`;
+  makeDraggable(chip, area);
+  area.appendChild(chip);
+  STATE.placedFields.push({id, type, label:labels[type]});
+  showToast(`${labels[type]} field added — drag to position`, 'success');
+}
+
+function removeField(id){
+  document.getElementById(id)?.remove();
+  STATE.placedFields = STATE.placedFields.filter(f => f.id !== id);
+}
+
+function makeDraggable(el, container){
+  el.addEventListener('mousedown', e => {
+    if(e.target.classList.contains('chip-del')) return;
+    const rect = el.getBoundingClientRect();
+    const cRect = container.getBoundingClientRect();
+    STATE.dragOffset = {x: e.clientX - rect.left, y: e.clientY - rect.top};
+    STATE.dragField = el;
+    document.addEventListener('mousemove', onDrag);
+    document.addEventListener('mouseup', stopDrag);
+    e.preventDefault();
+  });
+}
+
+function onDrag(e){
+  if(!STATE.dragField) return;
+  const container = document.getElementById('doc-page-1');
+  const cRect = container.getBoundingClientRect();
+  let x = e.clientX - cRect.left - STATE.dragOffset.x;
+  let y = e.clientY - cRect.top - STATE.dragOffset.y;
+  x = Math.max(0, Math.min(x, cRect.width - 160));
+  y = Math.max(0, Math.min(y, cRect.height - 40));
+  STATE.dragField.style.left = x + 'px';
+  STATE.dragField.style.top = y + 'px';
+}
+function stopDrag(){
+  STATE.dragField = null;
+  document.removeEventListener('mousemove', onDrag);
+  document.removeEventListener('mouseup', stopDrag);
+}
+
+// ═══════════════════════════════ SIGNERS ═══════════════════════════════
+function addSigner(){ document.getElementById('add-signer-modal').classList.add('open'); }
+
+function confirmAddSigner(){
+  const name = document.getElementById('new-signer-name').value.trim();
+  const email = document.getElementById('new-signer-email').value.trim();
+  if(!name||!email){ showToast('Please enter name and email', 'error'); return; }
+  STATE.signers.push({name, email, initials:(name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2))});
+  document.getElementById('new-signer-name').value = '';
+  document.getElementById('new-signer-email').value = '';
+  closeModal('add-signer-modal');
+  renderSignersPrepare();
+  showToast(`${name} added as signer`, 'success');
+}
+
+function renderSignersPrepare(){
+  const list = document.getElementById('signer-list-prepare');
+  if(STATE.signers.length === 0){
+    list.innerHTML = '<div style="font-size:13px;color:var(--text3);text-align:center;padding:12px 0">No signers added yet</div>';
+    return;
+  }
+  list.innerHTML = STATE.signers.map(s=>`
+    <div class="signer-row">
+      <div class="signer-avatar">${s.initials}</div>
+      <div class="signer-info">
+        <div class="signer-name">${s.name}</div>
+        <div class="signer-email">${s.email}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addSignerRow(){
+  const row = document.createElement('div');
+  row.className = 'signer-input-row';
+  row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:8px';
+  row.innerHTML = `
+    <input class="signer-name-input" type="text" placeholder="Full name" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:13px;background:var(--surface)"/>
+    <input class="signer-email-input" type="email" placeholder="Email address" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:13px;background:var(--surface)"/>
+    <button class="btn btn-outline btn-sm btn-icon" onclick="this.closest('.signer-input-row').remove()" style="font-size:16px;padding:9px 12px">✕</button>
+  `;
+  document.getElementById('send-signer-rows').appendChild(row);
+}
+
+// ═══════════════════════════════ SEND ═══════════════════════════════
+function openSendModal(){
+  const rows = document.getElementById('send-signer-rows');
+  rows.innerHTML = '';
+  const signersList = STATE.signers.length > 0 ? STATE.signers : [{name:'',email:''}];
+  signersList.forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'signer-input-row';
+    row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:8px';
+    row.innerHTML = `
+      <input class="signer-name-input" type="text" placeholder="Full name" value="${s.name}" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:13px;background:var(--surface)"/>
+      <input class="signer-email-input" type="email" placeholder="Email address" value="${s.email}" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:13px;background:var(--surface)"/>
+      <button class="btn btn-outline btn-sm btn-icon" onclick="this.closest('.signer-input-row').remove()" style="font-size:16px;padding:9px 12px">✕</button>
+    `;
+    rows.appendChild(row);
+  });
+  document.getElementById('send-modal').classList.add('open');
+}
+
+function sendDocument(){
+  const nameInputs = document.querySelectorAll('.signer-name-input');
+  const emailInputs = document.querySelectorAll('.signer-email-input');
+  const signers = [];
+  nameInputs.forEach((ni,i) => {
+    const n = ni.value.trim();
+    const e = emailInputs[i].value.trim();
+    if(n&&e) signers.push({name:n, email:e, initials:(n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)), signed:false});
+  });
+  if(signers.length === 0){ showToast('Add at least one signer', 'error'); return; }
+
+  STATE.signers = signers;
+  if(STATE.currentDoc){
+    STATE.currentDoc.signers = signers;
+    STATE.currentDoc.status = 'sent';
+    STATE.currentDoc.sentDate = new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+    STATE.currentDoc.audit = [
+      {text:`Document uploaded by ${STATE.user.name}`, time:timeAgo(5)},
+      {text:`Sent to ${signers.map(s=>s.name).join(', ')}`, time:timeAgo(2)},
+      {text:'Signing links delivered via email', time:'Just now'},
+    ];
+  }
+  closeModal('send-modal');
+  showToast('Document sent! Redirecting to signing…', 'success');
+  setTimeout(() => { goToSign(); }, 1200);
+}
+
+// ═══════════════════════════════ SIGN VIEW ═══════════════════════════════
+function goToSign(){
+  if(!STATE.currentDoc) return;
+  document.getElementById('sign-doc-name').textContent = STATE.currentDoc.name;
+  document.getElementById('sign-from').textContent = `Sent by ${STATE.user?.name||'Unknown'}`;
+
+  const pagesArea = document.getElementById('sign-doc-pages');
+  const fields = STATE.placedFields.length > 0 ? STATE.placedFields : [
+    {id:'sf1', type:'signature', label:'✍ Sign here'},
+    {id:'sf2', type:'date', label:'📅 Date'},
+  ];
+
+  pagesArea.innerHTML = '';
+  const page = document.createElement('div');
+  page.className = 'sign-page';
+  page.style.cssText = 'min-height:600px;background:var(--white);position:relative;border-radius:8px;overflow:hidden';
+  page.innerHTML = `<div style="padding:40px;width:100%;opacity:0.5">${mockLines(8)}</div>`;
+
+  fields.forEach((f,i) => {
+    const placeholder = document.createElement('div');
+    placeholder.className = 'sign-field-placeholder';
+    placeholder.id = 'spf_' + f.id;
+    placeholder.style.cssText = `bottom:${60 + i*90}px;left:${40 + i*15}px;position:absolute`;
+    placeholder.innerHTML = `${f.label} <span style="font-size:12px;font-family:'DM Sans',sans-serif;font-style:normal;opacity:0.7">(Click to sign)</span>`;
+    placeholder.onclick = () => openSigModal(f.id, f.type, placeholder);
+    page.appendChild(placeholder);
+  });
+
+  pagesArea.appendChild(page);
+  STATE.signerSigs = {};
+  updateFieldsRemaining(fields.length);
+  document.getElementById('sign-step-1').className = 'sign-step done';
+  document.getElementById('sign-step-2').className = 'sign-step active';
+  setAppView('sign');
+}
+
+function updateFieldsRemaining(count){
+  document.getElementById('fields-remaining').textContent = count;
+  const btn = document.getElementById('finish-sign-btn');
+  btn.disabled = count > 0;
+  if(count === 0){
+    document.getElementById('sign-step-2').className = 'sign-step done';
+    document.getElementById('sign-step-3').className = 'sign-step active';
+  }
+}
+
+function openSigModal(fieldId, type, placeholder){
+  STATE.currentSigField = {fieldId, type, placeholder};
+  document.getElementById('sig-modal-overlay').classList.add('open');
+  switchSigTab('draw');
+  setTimeout(initSigCanvas, 100);
+}
+
+// ═══════════════════════════════ SIGNATURE CANVAS ═══════════════════════════════
+function initSigCanvas(){
+  const canvas = document.getElementById('sig-canvas');
+  const ctx = canvas.getContext('2d');
+  STATE.sigCanvas = canvas;
+  STATE.sigCtx = ctx;
+  ctx.strokeStyle = STATE.sigColor;
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  let drawing = false;
+
+  function pos(e){
+    const r = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / r.width;
+    const scaleY = canvas.height / r.height;
+    if(e.touches){
+      return {x:(e.touches[0].clientX-r.left)*scaleX, y:(e.touches[0].clientY-r.top)*scaleY};
+    }
+    return {x:(e.clientX-r.left)*scaleX, y:(e.clientY-r.top)*scaleY};
+  }
+  function start(e){ e.preventDefault(); drawing=true; const p=pos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); }
+  function draw(e){ if(!drawing) return; e.preventDefault(); const p=pos(e); ctx.strokeStyle=STATE.sigColor; ctx.lineTo(p.x,p.y); ctx.stroke(); }
+  function end(){ drawing=false; }
+
+  canvas.onmousedown=start; canvas.onmousemove=draw; canvas.onmouseup=end; canvas.onmouseleave=end;
+  canvas.ontouchstart=start; canvas.ontouchmove=draw; canvas.ontouchend=end;
+}
+
+function clearSigCanvas(){
+  if(STATE.sigCanvas) STATE.sigCtx.clearRect(0,0,STATE.sigCanvas.width,STATE.sigCanvas.height);
+}
+
+function setSigColor(color, dot){
+  STATE.sigColor = color;
+  if(STATE.sigCtx) STATE.sigCtx.strokeStyle = color;
+  document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+  dot.classList.add('active');
+}
+
+function switchSigTab(tab){
+  document.getElementById('sig-draw-panel').style.display = tab==='draw' ? 'block' : 'none';
+  document.getElementById('sig-type-panel').style.display = tab==='type' ? 'block' : 'none';
+  document.getElementById('sig-upload-panel').style.display = tab==='upload' ? 'block' : 'none';
+  ['draw','type','upload'].forEach(t => {
+    document.getElementById('sig-tab-'+t).classList.toggle('active', t===tab);
+  });
+  if(tab==='draw') setTimeout(initSigCanvas, 50);
+}
+
+let sigTypeFont = 'Cormorant Garamond';
+function renderTypedSig(){
+  const text = document.getElementById('sig-type-text').value;
+  const canvas = document.getElementById('sig-type-canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.font = `italic 54px '${sigTypeFont}', cursive`;
+  ctx.fillStyle = STATE.sigColor;
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'center';
+  ctx.fillText(text, canvas.width/2, canvas.height/2);
+  canvas.style.display = text ? 'block' : 'none';
+}
+
+function handleSigUpload(input){
+  const file = input.files[0]; if(!file) return;
+  const canvas = document.getElementById('sig-upload-canvas');
+  const ctx = canvas.getContext('2d');
+  const img = new Image();
+  img.onload = () => {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const ratio = Math.min(canvas.width/img.width, canvas.height/img.height);
+    const w = img.width*ratio, h = img.height*ratio;
+    ctx.drawImage(img, (canvas.width-w)/2, (canvas.height-h)/2, w, h);
+    canvas.style.display = 'block';
+  };
+  img.src = URL.createObjectURL(file);
+}
+
+function applySignature(){
+  const tab = document.querySelector('.sig-tab.active').id.replace('sig-tab-','');
+  let sigData = null;
+
+  if(tab==='draw'){
+    const canvas = STATE.sigCanvas;
+    const blank = document.createElement('canvas'); blank.width=canvas.width; blank.height=canvas.height;
+    if(canvas.toDataURL() === blank.toDataURL()){ showToast('Please draw your signature', 'error'); return; }
+    sigData = canvas.toDataURL();
+  } else if(tab==='type'){
+    const text = document.getElementById('sig-type-text').value.trim();
+    if(!text){ showToast('Please type your name', 'error'); return; }
+    renderTypedSig();
+    sigData = document.getElementById('sig-type-canvas').toDataURL();
+  } else if(tab==='upload'){
+    const canvas = document.getElementById('sig-upload-canvas');
+    if(canvas.style.display==='none'){ showToast('Please upload a signature image', 'error'); return; }
+    sigData = canvas.toDataURL();
+  }
+
+  const {fieldId, placeholder} = STATE.currentSigField;
+  STATE.signerSigs[fieldId] = sigData;
+
+  placeholder.classList.add('completed');
+  placeholder.innerHTML = '';
+  const img = document.createElement('img');
+  img.src = sigData;
+  img.style.cssText = 'max-height:50px;max-width:180px;object-fit:contain;display:block';
+  placeholder.appendChild(img);
+  const check = document.createElement('span');
+  check.style.cssText = "font-size:12px;font-family:'DM Sans',sans-serif;font-style:normal;color:var(--accent);";
+  check.textContent = '✓ Signed';
+  placeholder.appendChild(check);
+  placeholder.onclick = null;
+  placeholder.style.cursor = 'default';
+
+  if(STATE.currentDoc){
+    STATE.currentDoc.audit.push({text:`Field "${fieldId}" signed`, time:'Just now'});
+  }
+
+  const total = STATE.placedFields.length || 2;
+  const signed = Object.keys(STATE.signerSigs).length;
+  updateFieldsRemaining(Math.max(0, total - signed));
+  closeModal('sig-modal-overlay');
+  showToast('Signature applied!', 'success');
+}
+
+// ═══════════════════════════════ FINISH SIGNING ═══════════════════════════════
+function finishSigning(){
+  if(!STATE.currentDoc) return;
+  STATE.currentDoc.status = 'completed';
+  STATE.currentDoc.completedDate = new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+  STATE.currentDoc.audit.push(
+    {text:'All fields completed', time:timeAgo(1)},
+    {text:'Document sealed with SHA-256 hash', time:'Just now'},
+    {text:'Completion email sent to all parties', time:'Just now'},
+  );
+  STATE.currentDoc.signers.forEach(s => s.signed = true);
+
+  document.getElementById('complete-doc-name').textContent = STATE.currentDoc.name;
+  document.getElementById('complete-doc-meta').textContent = `Completed · ${STATE.currentDoc.signers.length} signer(s) · ${new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}`;
+
+  const auditList = document.getElementById('audit-list');
+  auditList.innerHTML = (STATE.currentDoc.audit||[]).map(a=>`
+    <div class="audit-item">
+      <div class="audit-dot"></div>
+      <div class="audit-text">${a.text}</div>
+      <div class="audit-time">${a.time}</div>
+    </div>
+  `).join('');
+
+  setAppView('complete');
+  showToast('Document fully signed and secured! 🎉', 'success');
+}
+
+function downloadDoc(){
+  showToast('Downloading signed document…', 'success');
+  const content = `KAYAS E-SIGNATURE — COMPLETED DOCUMENT\n\nDocument: ${STATE.currentDoc?.name||'Document'}\nSigned: ${new Date().toLocaleString()}\nSigners: ${(STATE.currentDoc?.signers||[]).map(s=>s.name+'<'+s.email+'>').join(', ')}\n\nThis document was signed electronically via Kayas.\nAudit trail:\n${(STATE.currentDoc?.audit||[]).map(a=>'- '+a.text+' ('+a.time+')').join('\n')}`;
+  const blob = new Blob([content], {type:'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (STATE.currentDoc?.name||'document').replace('.pdf','_signed.txt');
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ═══════════════════════════════ DOC LISTS ═══════════════════════════════
+function renderDocList(){
+  const list = document.getElementById('dashboard-doc-list');
+  const docs = STATE.documents.slice(0,5);
+  if(docs.length === 0){
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">📄</div><div class="empty-title">No documents yet</div><div class="empty-sub">Upload your first document to get started</div><br/><button class="btn btn-gold" onclick="setAppView('upload')">Upload a Document</button></div>`;
+    return;
+  }
+  list.innerHTML = docs.map(d => docRow(d)).join('');
+}
+
+function renderTrackList(){
+  const list = document.getElementById('track-doc-list');
+  if(STATE.documents.length === 0){
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No documents yet</div><div class="empty-sub">Your documents will appear here</div></div>`;
+    return;
+  }
+  list.innerHTML = STATE.documents.map(d => docRow(d)).join('');
+}
+
+function docRow(d){
+  const badgeMap = {draft:'badge-draft', sent:'badge-sent', completed:'badge-completed', pending:'badge-pending'};
+  const labelMap = {draft:'Draft', sent:'Sent', completed:'Completed', pending:'Pending'};
+  const badge = badgeMap[d.status] || 'badge-draft';
+  const label = labelMap[d.status] || d.status;
+  const sigCount = d.signers?.length || 0;
+  return `<div class="doc-row" onclick="viewDoc('${d.id}')">
+    <div class="doc-name"><div class="doc-icon">📄</div><div><div style="font-weight:500">${d.name}</div><div style="font-size:11px;color:var(--text3)">${d.size||''}</div></div></div>
+    <div class="doc-meta col-signers">${sigCount} signer${sigCount!==1?'s':''}</div>
+    <div class="doc-meta col-created">${d.created||''}</div>
+    <div><span class="badge ${badge}"><span class="badge-dot"></span>${label}</span></div>
+    <div class="doc-actions">
+      ${d.status==='sent'?`<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();viewDoc('${d.id}')">Sign</button>`:''}
+      ${d.status==='completed'?`<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();downloadDoc()">Download</button>`:''}
+      <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();deleteDoc('${d.id}')">🗑</button>
+    </div>
+  </div>`;
+}
+
+function viewDoc(id){
+  const doc = STATE.documents.find(d => d.id == id);
+  if(!doc) return;
+  STATE.currentDoc = doc;
+  if(doc.status==='sent'||doc.status==='draft'){
+    // Re-sync placed fields if any
+    goToSign();
+  }
+}
+
+function deleteDoc(id){
+  STATE.documents = STATE.documents.filter(d => d.id != id);
+  renderDocList();
+  renderTrackList();
+  updateStats();
+  showToast('Document deleted', 'success');
+}
+
+function updateStats(){
+  const total = STATE.documents.length;
+  const pending = STATE.documents.filter(d => d.status==='sent').length;
+  const complete = STATE.documents.filter(d => d.status==='completed').length;
+  const month = STATE.documents.filter(d => d.status!=='draft').length;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-pending').textContent = pending;
+  document.getElementById('stat-complete').textContent = complete;
+  document.getElementById('stat-month').textContent = month;
+}
+
+// ═══════════════════════════════ UTILS ═══════════════════════════════
+function formatSize(bytes){
+  if(bytes < 1024) return bytes + 'B';
+  if(bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/1024/1024).toFixed(1) + ' MB';
+}
+
+function timeAgo(mins){
+  if(mins < 1) return 'Just now';
+  return `${mins} min${mins!==1?'s':''} ago`;
+}
+
+function showToast(msg, type=''){
+  const tc = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `<span>${type==='success'?'✓':type==='error'?'✕':'ℹ'}</span> ${msg}`;
+  tc.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(20px)';
+    toast.style.transition = 'all 0.3s';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+</script>
+<script>
+
+
+// ================= SIGNUP =================
+async function doSignup() {
+  const email = document.getElementById("signup-email").value;
+  const password = document.getElementById("signup-password").value;
+
+  const res = await fetch(API + "/api/user/signup", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ email, password })
+  });
+
+  const data = await res.json();
+
+  if (data.message) {
+    alert("Signup successful");
+  } else {
+    alert("Signup failed");
+  }
+}
+
+// ================= LOGIN =================
+async function doLogin() {
+  const email = document.getElementById("login-email").value;
+  const password = document.getElementById("login-password").value;
+
+  const res = await fetch("/api/user/login", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ email, password })
+  });
+
+  const data = await res.json();
+
+  if (data.user_id) {
+    alert("Login success");
+
+    document.getElementById("view-landing").classList.remove("active");
+    document.getElementById("view-app").classList.add("active");
+
+  } else {
+    alert("Invalid credentials");
+  }
+}
+// ================= DASHBOARD =================
+async function loadStats() {
+  const res = await fetch(API + "/api/document/stats");
+  const data = await res.json();
+
+  document.getElementById("stat-total").innerText = data.total;
+  document.getElementById("stat-pending").innerText = data.pending;
+  document.getElementById("stat-complete").innerText = data.completed;
+}
+
+// ================= FILE UPLOAD =================
+async function handleFileUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch(API + "/api/document/upload", {
+    method: "POST",
+    body: formData
+  });
+
+  const data = await res.json();
+  alert("Uploaded: " + data.filename);
+
+  
+}
+async function sendDocument() {
+  const message = document.getElementById("send-message").value;
+
+  // Get name & email (simple version)
+  const inputs = document.querySelectorAll("#send-signer-rows input");
+
+  let signers = [];
+
+  for (let i = 0; i < inputs.length; i += 2) {
+    signers.push({
+      name: inputs[i].value,
+      email: inputs[i + 1].value
+    });
+  }
+
+  const res = await fetch("/api/api/document/send", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      message: message,
+      signers: signers
+    })
+  });
+
+  const data = await res.json();
+
+  alert(data.message);
+}
+</script>
+
+<script>
+const API = "/api";
+
+// LOGIN
+async function doLogin() {
+  const email = document.getElementById("login-email").value;
+  const password = document.getElementById("login-password").value;
+
+  const res = await fetch(API + "/user/login", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ email, password })
+  });
+
+  const data = await res.json();
+
+  if (data.user_id) {
+    alert("Login success");
+
+    document.getElementById("view-landing").classList.remove("active");
+    document.getElementById("view-app").classList.add("active");
+  }
+}
+
+// SIGNUP
+async function doSignup() {
+  const email = document.getElementById("signup-email").value;
+  const password = document.getElementById("signup-password").value;
+
+  await fetch(API + "/user/signup", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ email, password })
+  });
+
+  alert("Signup success");
+}
+
+// UPLOAD
+async function handleFileUpload(input) {
+  const file = input.files[0];
+  if (!file) return alert("Select file");
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch(API + "/document/upload", {
+    method: "POST",
+    body: formData
+  });
+
+  const data = await res.json();
+  alert(data.message);
+}
+
+// SEND DOCUMENT
+async function sendDocument() {
+  const message = document.getElementById("send-message").value;
+
+  const inputs = document.querySelectorAll("#send-signer-rows input");
+
+  let signers = [];
+  for (let i = 0; i < inputs.length; i += 2) {
+    signers.push({
+      name: inputs[i].value,
+      email: inputs[i + 1].value
+    });
+  }
+
+  const res = await fetch(API + "/document/send", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ message, signers })
+  });
+
+  const data = await res.json();
+  alert(data.message);
+}
+</script>
+
+</body>
+</html>
