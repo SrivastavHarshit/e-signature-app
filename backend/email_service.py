@@ -12,8 +12,8 @@ except ImportError:
 
 SMTP_HOST  = "smtp.gmail.com"
 SMTP_PORT  = 587
-SMTP_USER  = "srivastava63290@gmail.com"
-SMTP_PASS  = "hlglbpxyuqsdlqul"
+SMTP_USER  = "123@gmail.com"
+SMTP_PASS  = "asdfghjklklwercefetdc"
 FROM_NAME  = "Kayas E-Sign"
 APP_URL    = "http://127.0.0.1:8000"
 
